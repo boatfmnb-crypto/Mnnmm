@@ -1,0 +1,175 @@
+-- [[ B.B Block Spin Script ]] --
+-- Profile Picture: Nobita Tattoo
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local ProfileImg = Instance.new("ImageLabel")
+local Container = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
+
+-- Setup GUI
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Name = "BBBlockSpinUI"
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 360, 0, 480)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Profile Image Setup (รูปโปรไฟล์โนบิตะแต่งรอยสัก)
+ProfileImg.Name = "ProfileImg"
+ProfileImg.Parent = MainFrame
+ProfileImg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ProfileImg.BackgroundTransparency = 1
+ProfileImg.Position = UDim2.new(0.04, 0, 0.02, 0)
+ProfileImg.Size = UDim2.new(0, 50, 0, 50)
+
+-- โหลดรูปโปรไฟล์อัตโนมัติสำหรับตัวรัน (Executor)
+task.spawn(function()
+    local filename = "BB_Nobita_Profile.png"
+    local imageUrl = "https://i.imgur.com/v8N9Z7P.jpg" -- ลิงก์รูปภาพโนบิตะลายสัก
+    
+    if writefile and getcustomasset then
+        if not isfile(filename) then
+            local success, response = pcall(function()
+                return game:HttpGet(imageUrl)
+            end)
+            if success then
+                writefile(filename, response)
+            end
+        end
+        if isfile(filename) then
+            ProfileImg.Image = getcustomasset(filename)
+        end
+    else
+        -- ถ้าตัวรันไม่รองรับ ให้ใช้ Asset ID สำรอง
+        ProfileImg.Image = "rbxassetid://12345678"
+    end
+end)
+
+-- Title
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0.22, 0, 0.02, 0)
+Title.Size = UDim2.new(0.74, 0, 0, 50)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "B.B Block Spin"
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.TextSize = 24.000
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Container
+Container.Name = "Container"
+Container.Parent = MainFrame
+Container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Container.BorderSizePixel = 0
+Container.Position = UDim2.new(0.04, 0, 0.14, 0)
+Container.Size = UDim2.new(0.92, 0, 0.82, 0)
+Container.CanvasSize = UDim2.new(0, 0, 1.3, 0)
+
+UIListLayout.Parent = Container
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+
+-- Variables Storage
+_G.BB_Settings = {
+    Aimbot = false,
+    AimbotLevel = "ปกติ", -- ปกติ, กลาง, แรง
+    ESP_Position = false,
+    ESP_Health = false,
+    ShowFOV = false,
+    FOVSize = 50,
+    InfinitePower = false
+}
+
+-- Helper Functions
+local function createToggle(text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Parent = Container
+    btn.Size = UDim2.new(1, -10, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.Font = Enum.Font.SourceSans
+    btn.Text = text .. " : [ปิด]"
+    btn.TextColor3 = Color3.fromRGB(255, 100, 100)
+    btn.TextSize = 16
+    
+    local enabled = false
+    btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            btn.Text = text .. " : [เปิด]"
+            btn.TextColor3 = Color3.fromRGB(100, 255, 100)
+        else
+            btn.Text = text .. " : [ปิด]"
+            btn.TextColor3 = Color3.fromRGB(255, 100, 100)
+        end
+        callback(enabled)
+    end)
+end
+
+-- 1. ล็อกหัว
+createToggle("1. ล็อกหัว (Aimbot)", function(state)
+    _G.BB_Settings.Aimbot = state
+end)
+
+-- 2. เลือกระดับล็อกหัว (ปกติ, กลาง, แรง)
+local levelBtn = Instance.new("TextButton")
+levelBtn.Parent = Container
+levelBtn.Size = UDim2.new(1, -10, 0, 38)
+levelBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+levelBtn.Font = Enum.Font.SourceSans
+levelBtn.Text = "2. ระดับการล็อกหัว : [ปกติ]"
+levelBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+levelBtn.TextSize = 16
+
+local levels = {"ปกติ", "กลาง", "แรง"}
+local currentLevelIndex = 1
+levelBtn.MouseButton1Click:Connect(function()
+    currentLevelIndex = currentLevelIndex + 1
+    if currentLevelIndex > #levels then currentLevelIndex = 1 end
+    _G.BB_Settings.AimbotLevel = levels[currentLevelIndex]
+    levelBtn.Text = "2. ระดับการล็อกหัว : [" .. levels[currentLevelIndex] .. "]"
+end)
+
+-- 3. เห็นตำแหน่งศัตรู
+createToggle("3. เห็นตำแหน่งศัตรู (ESP)", function(state)
+    _G.BB_Settings.ESP_Position = state
+end)
+
+-- 4. เห็นเลือดศัตรู
+createToggle("4. เห็นเลือดศัตรู (ESP Health)", function(state)
+    _G.BB_Settings.ESP_Health = state
+end)
+
+-- 5. วง FOV
+createToggle("5. แสดงวง FOV", function(state)
+    _G.BB_Settings.ShowFOV = state
+end)
+
+-- 6. ขนาดวง FOV (1-100)
+local fovBtn = Instance.new("TextButton")
+fovBtn.Parent = Container
+fovBtn.Size = UDim2.new(1, -10, 0, 38)
+fovBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+fovBtn.Font = Enum.Font.SourceSans
+fovBtn.Text = "6. ขนาดวง FOV : [50]"
+fovBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovBtn.TextSize = 16
+
+fovBtn.MouseButton1Click:Connect(function()
+    _G.BB_Settings.FOVSize = _G.BB_Settings.FOVSize + 10
+    if _G.BB_Settings.FOVSize > 100 then _G.BB_Settings.FOVSize = 1 end
+    fovBtn.Text = "6. ขนาดวง FOV : [" .. tostring(_G.BB_Settings.FOVSize) .. "]"
+end)
+
+-- 7. พลังไม่จำกัด
+createToggle("7. พลังไม่จำกัด (Infinite Power)", function(state)
+    _G.BB_Settings.InfinitePower = state
+end)
